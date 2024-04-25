@@ -1,17 +1,23 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
-#include "Snake.h"
-#ifdef U8X8_HAVE_HW_SPI
-#include <SPI.h>
-#endif
-#ifdef U8X8_HAVE_HW_I2C
-#include <Wire.h>
-#endif
+#include <ArxContainer.h>
 #define LBT 2  //LEFT BUTTON
 #define RBT 3  //RIGHT BUTTON
 #define ABT 4  //ACCEPT BUTTON
+struct segment{
+  int x;
+  int y;
+};
 bool mainMenuButtonState = true;
-int panelState = 0;  //0 - menu, 1 - help, 2 - game
+int snakeSize = 7;
+int direction = 0; //0 - east, 1 - south, 2 - west, 3 - north
+std::vector<segment>body;
+segment head;
+enum States{
+    MAIN_MENU,
+    HELP_PANEL,
+    GAME_PANEL
+}state;
 U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, 8, 9, 5, 7, 6);
 //LCD PIN - ARDU PIN
 //1 - 9
@@ -118,8 +124,60 @@ void drawHelpPanel() {
   u8g2.drawStr(63, 59, "head on anything!");
   u8g2.setFont(u8g2_font_tenfatguys_tf);
 }
+void drawSnake(){
+  for(int i = 0; i < snakeSize; i++){
+    int x = body[i].x;
+    int y = body[i].y;
+    u8g2.drawFrame(x, y, 3, 3);
+  }
+}
+void prepareSnake(){
+  for(int i = 0; i < snakeSize; i++){
+    if(i != 0){
+      segment temp;
+      temp.x = head.x - 3*i;
+      temp.y = head.y;
+      body.push_back(temp);
+    }  
+    else{
+      head.x = 64;
+      head.y = 32;
+      body.push_back(head);
+    } 
+  }
+}
+void nextFrameSnake(){
+  for(int i = snakeSize; i >= 0; i--){
+    if(i == 0){
+      switch(direction){
+        case 0:
+          body[i].x = body[i].x + 3;
+          break;
+        case 1:
+          body[i].y = body[i].y + 3;
+          break;
+        case 2:
+          body[i].x = body[i].x - 3;
+          break;
+        case 3:
+          body[i].y = body[i].y - 3;
+          break;
+      }
+    }
+    else{
+      body[i].x = body[i-1].x;
+      body[i].y = body[i-1].y;
+    }
+  }
+}
+void drawGamePanel(){
+  u8g2.drawFrame(0,0,128,64);
+  drawSnake();
+  nextFrameSnake();
+}
 void setup() {
   Serial.begin(9600);
+  prepareSnake();
   pinMode(LBT, INPUT);
   pinMode(RBT, INPUT);
   pinMode(ABT, INPUT);
@@ -128,7 +186,7 @@ void setup() {
 }
 
 void loop() {
-  if (panelState == 0) {
+  if (state == MAIN_MENU) {
     if (digitalRead(LBT) == LOW) {
       Serial.println("LEFT button pressed");
       mainMenuButtonState = !mainMenuButtonState;
@@ -142,9 +200,10 @@ void loop() {
     if (digitalRead(ABT) == LOW) {
       Serial.println("ACCEPT button pressed");
       if (mainMenuButtonState) {  //PLAY button selected
-
-      } else if (!mainMenuButtonState) {  //HELP button selected
-        panelState = 1;
+        state = GAME_PANEL;
+      } 
+      else if (!mainMenuButtonState) {  //HELP button selected
+        state = HELP_PANEL;
       }
       delay(100);
     }
@@ -152,14 +211,69 @@ void loop() {
     drawMainMenu();
     u8g2.sendBuffer();
     delay(100);
-  } else if (panelState == 1) {
+  } 
+  else if (state == HELP_PANEL) {
     if (digitalRead(ABT) == LOW) {
-      panelState = 0;
+      state = MAIN_MENU;
       delay(100);
     }
     u8g2.clearBuffer();
     drawHelpPanel();
     u8g2.sendBuffer();
     delay(100);
+  }
+  else if(state == GAME_PANEL){
+    if(digitalRead(RBT) == LOW && direction == 0){
+      direction = 1;
+      body[0].x = body[0].x - 3;  //MOVE HEAD from EAST to SOUTH
+      body[0].y = body[0].y + 3;
+      delay(100);
+    }
+    else if(digitalRead(RBT) == LOW && direction == 1){
+      direction = 2;
+      body[0].x = body[0].x - 3;  //MOVE HEAD from SOUTH to WEST
+      body[0].y = body[0].y - 3;
+      delay(100);
+    }
+    else if(digitalRead(RBT) == LOW && direction == 2){
+      direction = 3;
+      body[0].x = body[0].x + 3;  //MOVE HEAD from WEST to NORTH
+      body[0].y = body[0].y - 3;
+      delay(100);
+    }
+    else if(digitalRead(RBT) == LOW && direction == 3){
+      direction = 0;
+      body[0].x = body[0].x + 3;  //MOVE HEAD from NORTH to EAST
+      body[0].y = body[0].y + 3;
+      delay(100);
+    }
+    else if(digitalRead(LBT) == LOW && direction == 0){
+      direction = 3;
+      body[0].x = body[0].x - 3;  //MOVE HEAD from EAST to NORTH
+      body[0].y = body[0].y - 3;
+      delay(100);
+    }
+    else if(digitalRead(LBT) == LOW && direction == 3){
+      direction = 2;
+      body[0].x = body[0].x - 3;  //MOVE HEAD from NORTH to WEST
+      body[0].y = body[0].y + 3;
+      delay(100);
+    }
+    else if(digitalRead(LBT) == LOW && direction == 2){
+      direction = 1;
+      body[0].x = body[0].x + 3;  //MOVE HEAD from WEST to SOUTH
+      body[0].y = body[0].y + 3;
+      delay(100);
+    }
+    else if(digitalRead(LBT) == LOW && direction == 1){
+      direction = 0;
+      body[0].x = body[0].x + 3;  //MOVE HEAD from SOUTH to EAST
+      body[0].y = body[0].y - 3;
+      delay(100);
+    }
+    u8g2.clearBuffer();
+    drawGamePanel();
+    u8g2.sendBuffer();
+    delay(200);
   }
 }
