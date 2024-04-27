@@ -1,9 +1,15 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
-#include <ArxContainer.h>
-#define LBT 2  //LEFT BUTTON
-#define RBT 3  //RIGHT BUTTON
-#define ABT 4  //ACCEPT BUTTON
+#include<esp_random.h>
+#define LBT 26  //LEFT BUTTON
+#define RBT 25 //RIGHT BUTTON
+#define ABT 33  //ACCEPT BUTTON
+#define MAXSIZE 100 // MAX SIZE OF THE SNAKE
+#define DATA 23
+#define DC 19
+#define CLOCK 18
+#define CS 5
+#define RESET 4
 struct segment{
   int x;
   int y;
@@ -11,14 +17,16 @@ struct segment{
 bool mainMenuButtonState = true;
 int snakeSize = 7;
 int direction = 0; //0 - east, 1 - south, 2 - west, 3 - north
-std::vector<segment>body;
+segment body[MAXSIZE];
 segment head;
+int appleCoords[2];
+bool appleExists = false;
 enum States{
     MAIN_MENU,
     HELP_PANEL,
     GAME_PANEL
 }state;
-U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, 8, 9, 5, 7, 6);
+U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, CLOCK, DATA, CS, DC, RESET);
 //LCD PIN - ARDU PIN
 //1 - 9
 //2 - 6
@@ -131,18 +139,27 @@ void drawSnake(){
     u8g2.drawFrame(x, y, 3, 3);
   }
 }
+void drawApple(){
+  if(appleExists){
+    u8g2.drawBox(appleCoords[0], appleCoords[1], 3,3);
+  }
+  else if(!appleExists){
+    int x = random(2,127);
+    int y = random(2, 63);
+    appleCoords[0] = x;
+    appleCoords[1] = y;
+    appleExists = true;
+  }
+}
 void prepareSnake(){
   for(int i = 0; i < snakeSize; i++){
     if(i != 0){
-      segment temp;
-      temp.x = head.x - 3*i;
-      temp.y = head.y;
-      body.push_back(temp);
+      body[i].x = head.x - 3*i;
+      body[i].y = head.y;
     }  
     else{
-      head.x = 64;
-      head.y = 32;
-      body.push_back(head);
+      body[i].x = head.x;
+      body[i].y = head.y;
     } 
   }
 }
@@ -170,19 +187,60 @@ void nextFrameSnake(){
     }
   }
 }
+void addNewSegment(){
+  segment temp;
+  if((body[snakeSize-1].x - body[snakeSize-2].x) < 0){
+    temp.x = body[snakeSize-1].x - 3;
+    temp.y = body[snakeSize-1].y;
+    snakeSize++;
+    body[snakeSize-1] = temp;
+  }
+  if((body[snakeSize-1].x - body[snakeSize-2].x) > 0){
+    temp.x = body[snakeSize-1].x + 3;
+    temp.y = body[snakeSize-1].y;
+    snakeSize++;
+    body[snakeSize-1] = temp;
+  }
+  if((body[snakeSize-1].y - body[snakeSize-2].y) < 0){
+    temp.x = body[snakeSize-1].x;
+    temp.y = body[snakeSize-1].y - 3;
+    snakeSize++;
+    body[snakeSize-1] = temp;
+  }
+  if((body[snakeSize-1].y - body[snakeSize-2].y) > 0){
+    temp.x = body[snakeSize-1].x;
+    temp.y = body[snakeSize-1].y + 3;
+    snakeSize++;
+    body[snakeSize-1] = temp;
+  }
+}
+void checkForApples(){
+  if(((body[0].x >= appleCoords[0] && body[0].x <= appleCoords[0]+3) ||
+     (body[0].x+3 <= appleCoords[0]+3 && body[0].x+3 >= appleCoords[0])) &&
+     ((body[0].y >= appleCoords[1] && body[0].y <= appleCoords[1]+3)||
+     (body[0].y+3 <= appleCoords[1]+3 && body[0].y+3 >= appleCoords[1]))){
+      appleExists = false;
+      addNewSegment();
+     }
+}
 void drawGamePanel(){
   u8g2.drawFrame(0,0,128,64);
   drawSnake();
+  checkForApples();
+  drawApple();
   nextFrameSnake();
 }
 void setup() {
   Serial.begin(9600);
-  prepareSnake();
   pinMode(LBT, INPUT);
   pinMode(RBT, INPUT);
   pinMode(ABT, INPUT);
+  randomSeed(analogRead(2));
+  head.x = 64;
+  head.y = 32;
+  prepareSnake();
   u8g2.begin();
-  u8g2.setContrast(45);
+  u8g2.setContrast(60);
 }
 
 void loop() {
