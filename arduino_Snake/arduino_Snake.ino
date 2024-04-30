@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
-#include<esp_random.h>
 #define LBT 26  //LEFT BUTTON
 #define RBT 25 //RIGHT BUTTON
 #define ABT 33  //ACCEPT BUTTON
@@ -15,6 +14,7 @@ struct segment{
   int y;
 };
 bool mainMenuButtonState = true;
+bool gameOverButtonState = true;
 int snakeSize = 7;
 int direction = 0; //0 - east, 1 - south, 2 - west, 3 - north
 segment body[MAXSIZE];
@@ -24,7 +24,8 @@ bool appleExists = false;
 enum States{
     MAIN_MENU,
     HELP_PANEL,
-    GAME_PANEL
+    GAME_PANEL,
+    GAME_OVER
 }state;
 U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, CLOCK, DATA, CS, DC, RESET);
 //LCD PIN - ARDU PIN
@@ -132,6 +133,38 @@ void drawHelpPanel() {
   u8g2.drawStr(63, 59, "head on anything!");
   u8g2.setFont(u8g2_font_tenfatguys_tf);
 }
+void drawGameOver(){
+  u8g2.drawFrame(0, 0, 128, 64);
+  u8g2.drawStr(15, 20, "GAME OVER");
+  if(gameOverButtonState){
+    u8g2.drawButtonUTF8(10, 50, U8G2_BTN_INV | U8G2_BTN_BW2, 0, 2, 2, "RESTART");
+    u8g2.drawButtonUTF8(75, 50, U8G2_BTN_BW2, 0, 2, 2, "EXIT");
+  }
+  else if(!gameOverButtonState){
+    u8g2.drawButtonUTF8(10, 50, U8G2_BTN_BW2, 0, 2, 2, "RESTART");
+    u8g2.drawButtonUTF8(75, 50, U8G2_BTN_INV | U8G2_BTN_BW2, 0, 2, 2, "EXIT");
+  }
+}
+void checkForCollision(){
+  int x = body[0].x;
+  int y = body[0].y;
+  if(x <= 0 || x >= 128 || y <= 0 || y >= 64){
+    state = GAME_OVER;
+    snakeSize = 7;
+    direction = 0;
+    appleExists = false;
+    prepareSnake();
+  }
+  for(int i = 1; i < snakeSize; i++){
+    if(x == body[i].x && y == body[i].y){
+      state = GAME_OVER;
+      snakeSize = 7;
+      direction = 0;
+      appleExists = false;
+      prepareSnake();
+    }
+  }
+}
 void drawSnake(){
   for(int i = 0; i < snakeSize; i++){
     int x = body[i].x;
@@ -144,8 +177,8 @@ void drawApple(){
     u8g2.drawBox(appleCoords[0], appleCoords[1], 3,3);
   }
   else if(!appleExists){
-    int x = random(2,127);
-    int y = random(2, 63);
+    int x = random(5,123);
+    int y = random(5, 59);
     appleCoords[0] = x;
     appleCoords[1] = y;
     appleExists = true;
@@ -224,6 +257,7 @@ void checkForApples(){
      }
 }
 void drawGamePanel(){
+  checkForCollision();
   u8g2.drawFrame(0,0,128,64);
   drawSnake();
   checkForApples();
@@ -333,5 +367,25 @@ void loop() {
     drawGamePanel();
     u8g2.sendBuffer();
     delay(200);
+  }
+  else if(state == GAME_OVER){
+    if(digitalRead(LBT) == LOW){
+      gameOverButtonState = !gameOverButtonState;
+    }
+    else if(digitalRead(RBT) == LOW){
+      gameOverButtonState = !gameOverButtonState;
+    }
+    else if(digitalRead(ABT) == LOW){
+      if(gameOverButtonState){
+        state = GAME_PANEL;
+      }
+      else{
+        state = MAIN_MENU;
+      }
+    }
+    u8g2.clearBuffer();
+    drawGameOver();
+    u8g2.sendBuffer();
+    delay(100);
   }
 }
