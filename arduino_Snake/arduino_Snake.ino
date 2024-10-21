@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
-#define LBT 26  //LEFT BUTTON
+#define LBT 33  //LEFT BUTTON
 #define RBT 25 //RIGHT BUTTON
-#define ABT 33  //ACCEPT BUTTON
+#define ABT 26  //ACCEPT BUTTON
 #define MAXSIZE 100 // MAX SIZE OF THE SNAKE
 #define DATA 23
 #define DC 19
