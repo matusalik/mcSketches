@@ -1,4 +1,5 @@
 #include<U8g2lib.h>
+#include"Snake.h"
 
 //PINS
 #define LeftButton 33
@@ -17,6 +18,7 @@ U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, CLOCK, DATA, CS, DC, RESET);
 unsigned long button_time = 0;  
 unsigned long last_button_time = 0; 
 int x = 20;
+Snake snake;
 
 //INTERRUPTS
 void IRAM_ATTR LeftButtonISR(){
@@ -57,7 +59,16 @@ void setup() {
 
 void loop() {
   u8g2.clearBuffer();
-  u8g2.drawCircle(x, 20, 15);
+  drawSnake();
+  snake.nextFrameSnake();
   u8g2.sendBuffer();
-  delay(100);
+  delay(200);
+}
+
+void drawSnake(){
+  for(int i = 0; i < snake.getSnakeSize(); i++){
+    int x = snake.getBody(i).x;
+    int y = snake.getBody(i).y;
+    u8g2.drawFrame(x, y, 3, 3);
+  }
 }
