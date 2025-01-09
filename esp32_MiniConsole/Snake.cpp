@@ -58,7 +58,7 @@ void Snake::nextFrameSnake(){
 }
 
 void Snake::addNewSegment(){
-  segment temp;
+  Segment temp;
   if((body[snakeSize-1].x - body[snakeSize-2].x) < 0){
     temp.x = body[snakeSize-1].x - 3;
     temp.y = body[snakeSize-1].y;

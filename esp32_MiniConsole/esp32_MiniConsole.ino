@@ -1,5 +1,7 @@
 #include<U8g2lib.h>
 #include"Snake.h"
+#include"SnakeMenu.h"
+#include"States.h"
 
 //PINS
 #define LeftButton 33
@@ -19,12 +21,15 @@ unsigned long button_time = 0;
 unsigned long last_button_time = 0; 
 int x = 20;
 Snake snake;
+SnakeMenu snakeMenu;
+States state = MAIN_MENU;
 
 //INTERRUPTS
 void IRAM_ATTR LeftButtonISR(){
   button_time = millis();
   if (button_time - last_button_time > 250)
   {
+    snakeMenu.changeButtonState();
     last_button_time = button_time;
   }
 }
@@ -33,6 +38,7 @@ void IRAM_ATTR RightButtonISR(){
   button_time = millis();
   if (button_time - last_button_time > 250)
   {
+    snakeMenu.changeButtonState();
     last_button_time = button_time;
   }
 }
@@ -58,10 +64,9 @@ void setup() {
 }
 
 void loop() {
-  u8g2.clearBuffer();
-  drawSnake();
-  snake.nextFrameSnake();
-  u8g2.sendBuffer();
+  if(state == MAIN_MENU){
+    snakeMenu.drawMainMenu(u8g2);
+  }
   delay(200);
 }
 

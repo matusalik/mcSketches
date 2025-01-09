@@ -1,0 +1,6 @@
+enum States{
+  MAIN_MENU,
+  HELP_PANEL,
+  GAME_PANEL,
+  GAME_OVER
+};
