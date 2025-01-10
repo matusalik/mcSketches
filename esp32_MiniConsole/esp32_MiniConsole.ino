@@ -29,7 +29,9 @@ void IRAM_ATTR LeftButtonISR(){
   button_time = millis();
   if (button_time - last_button_time > 250)
   {
-    snakeMenu.changeButtonState();
+    if(state == MAIN_MENU){
+      snakeMenu.changeButtonState();
+    }
     last_button_time = button_time;
   }
 }
@@ -38,7 +40,9 @@ void IRAM_ATTR RightButtonISR(){
   button_time = millis();
   if (button_time - last_button_time > 250)
   {
-    snakeMenu.changeButtonState();
+    if(state == MAIN_MENU){
+      snakeMenu.changeButtonState();
+    }
     last_button_time = button_time;
   }
 }
@@ -47,6 +51,17 @@ void IRAM_ATTR AcceptButtonISR(){
   button_time = millis();
   if (button_time - last_button_time > 250)
   {
+    if(state == MAIN_MENU){
+      if(snakeMenu.getButtonState()){
+        state = GAME_PANEL;
+      }
+      else if(!snakeMenu.getButtonState()){
+        state = HELP_PANEL;
+      }
+    }
+    else if(state == HELP_PANEL){
+      state = MAIN_MENU;
+    }
     last_button_time = button_time;
   }
 }
@@ -64,16 +79,21 @@ void setup() {
 }
 
 void loop() {
+  u8g2.clearBuffer();
   if(state == MAIN_MENU){
     snakeMenu.drawMainMenu(u8g2);
   }
+  else if(state == HELP_PANEL){
+    snakeMenu.drawHelpMenu(u8g2);
+  }
+  else if(state == GAME_PANEL){
+    drawGamePanel();
+  }
+  u8g2.sendBuffer();
   delay(200);
 }
 
-void drawSnake(){
-  for(int i = 0; i < snake.getSnakeSize(); i++){
-    int x = snake.getBody(i).x;
-    int y = snake.getBody(i).y;
-    u8g2.drawFrame(x, y, 3, 3);
-  }
+void drawGamePanel(){
+  snake.drawSnake(u8g2);
+  snake.nextFrameSnake();
 }

@@ -32,6 +32,14 @@ void Snake::prepareSnake() {
   }
 }
 
+void Snake::drawSnake(U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI& u8g2){
+  for(int i = 0; i < snakeSize; i++){
+    int x = body[i].x;
+    int y = body[i].y;
+    u8g2.drawFrame(x, y, 3, 3);
+  }
+}
+
 void Snake::nextFrameSnake(){
   for(int i = this->snakeSize; i >= 0; i--){
     if(i == 0){
