@@ -92,3 +92,73 @@ void Snake::addNewSegment(){
     body[snakeSize-1] = temp;
   }
 }
+
+void Snake::turnSnake(bool isRight){
+  if(isRight){
+    if(direction == 0){
+      direction = 1;
+      body[0].x = body[0].x - 3;  //MOVE HEAD from EAST to SOUTH
+      body[0].y = body[0].y + 3;
+    }
+    else if(direction == 1){
+      direction = 2;
+      body[0].x = body[0].x - 3;  //MOVE HEAD from SOUTH to WEST
+      body[0].y = body[0].y - 3;
+    }
+    else if(direction == 2){
+      direction = 3;
+      body[0].x = body[0].x + 3;  //MOVE HEAD from WEST to NORTH
+      body[0].y = body[0].y - 3;
+    }
+    else if(direction == 3){
+      direction = 0;
+      body[0].x = body[0].x + 3;  //MOVE HEAD from NORTH to EAST
+      body[0].y = body[0].y + 3;
+    }
+  }
+  else if(!isRight){
+    if(direction == 0){
+      direction = 3;
+      body[0].x = body[0].x - 3;  //MOVE HEAD from EAST to NORTH
+      body[0].y = body[0].y - 3;
+    }
+    else if(direction == 1){
+      direction = 0;
+      body[0].x = body[0].x + 3;  //MOVE HEAD from SOUTH to EAST
+      body[0].y = body[0].y - 3;
+    }
+    else if(direction == 2){
+      direction = 1;
+      body[0].x = body[0].x + 3;  //MOVE HEAD from WEST to SOUTH
+      body[0].y = body[0].y + 3;
+    }
+    else if(direction == 3){
+      direction = 2;
+      body[0].x = body[0].x - 3;  //MOVE HEAD from NORTH to WEST
+      body[0].y = body[0].y + 3;
+    }
+  }
+}
+bool Snake::checkForCollision(){
+  int x = body[0].x;
+  int y = body[0].y;
+  if(x <= 0 || x >= 128 || y <= 0 || y >= 64){
+    snakeSize = 7;
+    direction = 0;
+    prepareSnake();
+    return true;
+  }
+  for(int i = 1; i < snakeSize; i++){
+    if(x == body[i].x && y == body[i].y){
+      snakeSize = 7;
+      direction = 0;
+      prepareSnake();
+      return true;
+    }
+  }
+  return false;
+}
+
+
+
+

@@ -18,5 +18,7 @@ class Snake{
     void nextFrameSnake();
     void setDirection(int direction);
     void addNewSegment();
+    void turnSnake(bool isRight);
+    bool checkForCollision();
 };
 #endif
