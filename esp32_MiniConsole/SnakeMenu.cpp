@@ -101,9 +101,10 @@ void SnakeMenu::drawHelpMenu(U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI& u8g2){
   u8g2.setFont(u8g2_font_tenfatguys_tf);
 }
 
-void SnakeMenu::drawGameOverPanel(U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI& u8g2){
+void SnakeMenu::drawGameOverPanel(U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI& u8g2, int score){
+  u8g2.setFont(u8g2_font_tenfatguys_tf);
   u8g2.drawFrame(0, 0, 128, 64);
-  u8g2.drawStr(15, 20, "GAME OVER");
+  u8g2.drawStr(15, 15, "GAME OVER");
   if(gameOverButtonState){
     u8g2.drawButtonUTF8(10, 50, U8G2_BTN_INV | U8G2_BTN_BW2, 0, 2, 2, "RESET");
     u8g2.drawButtonUTF8(75, 50, U8G2_BTN_BW2, 0, 2, 2, "EXIT");
@@ -112,6 +113,10 @@ void SnakeMenu::drawGameOverPanel(U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI& u8g2){
     u8g2.drawButtonUTF8(10, 50, U8G2_BTN_BW2, 0, 2, 2, "RESET");
     u8g2.drawButtonUTF8(75, 50, U8G2_BTN_INV | U8G2_BTN_BW2, 0, 2, 2, "EXIT");
   }
+  u8g2.setFont(u8g2_font_trixel_square_tr);
+  String temp = "SCORE: " + String(score);
+  const char* c = temp.c_str();
+  u8g2.drawStr(50, 28, c);
 }
 
 bool SnakeMenu::getButtonState(){

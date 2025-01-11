@@ -254,7 +254,7 @@ void checkForApples(){
      (body[0].y+3 <= appleCoords[1]+3 && body[0].y+3 >= appleCoords[1]))){
       appleExists = false;
       addNewSegment();
-     }
+    }
 }
 void drawGamePanel(){
   checkForCollision();

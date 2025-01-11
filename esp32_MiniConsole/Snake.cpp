@@ -158,6 +158,17 @@ bool Snake::checkForCollision(){
   }
   return false;
 }
+bool Snake::checkForApples(Apple& apple){
+  if(((body[0].x >= apple.getX() && body[0].x <= apple.getX()+3) ||
+     (body[0].x+3 <= apple.getX()+3 && body[0].x+3 >= apple.getX())) &&
+     ((body[0].y >= apple.getY() && body[0].y <= apple.getY()+3)||
+     (body[0].y+3 <= apple.getY()+3 && body[0].y+3 >= apple.getY()))){
+      apple.eatApple();
+      addNewSegment();
+      return true;
+    }
+  return false;
+}
 
 
 

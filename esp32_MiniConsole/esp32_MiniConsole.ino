@@ -1,7 +1,9 @@
 #include<U8g2lib.h>
+#include<string.h>
 #include"Snake.h"
 #include"SnakeMenu.h"
 #include"States.h"
+#include"Apple.h"
 
 //PINS
 #define LeftButton 33
@@ -25,6 +27,12 @@ SnakeMenu snakeMenu;
 States state = MAIN_MENU;
 bool isRightPressed = false;
 bool isLeftPressed = false;
+bool drawPlus10 = false;
+int score = 0;
+int scoreCounter = 0;
+int drawPlus10Counter = 0;
+int tempAppleCoords[2];
+Apple apple;
 
 //INTERRUPTS
 void IRAM_ATTR LeftButtonISR(){
@@ -78,9 +86,13 @@ void IRAM_ATTR AcceptButtonISR(){
     }
     else if(state == GAME_OVER){
       if(snakeMenu.getGameOverButtonState()){
+        score = 0;
+        scoreCounter = 0;
         state = GAME_PANEL;
       }
       else if(!snakeMenu.getGameOverButtonState()){
+        score = 0;
+        scoreCounter = 0;
         state = MAIN_MENU;
       }
     }
@@ -96,6 +108,8 @@ void setup() {
   attachInterrupt(LeftButton, LeftButtonISR, FALLING);
   attachInterrupt(RightButton, RightButtonISR, FALLING);
   attachInterrupt(AcceptButton, AcceptButtonISR, FALLING);
+  tempAppleCoords[0] = apple.getX();
+  tempAppleCoords[1] = apple.getY();
   u8g2.begin();
   u8g2.setContrast(60);
 }
@@ -117,10 +131,32 @@ void loop() {
       snake.turnSnake(false);
       isLeftPressed = false;
     }
+    scoreCounter++;
+    if(scoreCounter == 10){
+      score++;
+      scoreCounter = 0;
+    }
+    if(snake.checkForApples(apple)){
+      drawPlus10 = true;
+      score += 10;
+    }
+    if(drawPlus10){
+      drawPlus10Counter++;
+      if(drawPlus10Counter < 10){
+        u8g2.setFont(u8g2_font_trixel_square_tr);
+        u8g2.drawStr(tempAppleCoords[0]-2, tempAppleCoords[1]-4, "+10");
+      }
+      else{
+        drawPlus10 = false;
+        drawPlus10Counter = 0;
+        tempAppleCoords[0] = apple.getX();
+        tempAppleCoords[1] = apple.getY();
+      }
+    }
     drawGamePanel();
   }
   else if(state == GAME_OVER){
-    snakeMenu.drawGameOverPanel(u8g2);
+    snakeMenu.drawGameOverPanel(u8g2, score);
   }
   u8g2.sendBuffer();
   delay(100);
@@ -128,8 +164,13 @@ void loop() {
 
 void drawGamePanel(){
   u8g2.drawFrame(0,0,128,64);
+  u8g2.setFont(u8g2_font_trixel_square_tr);
+  String temp = "SCORE: " + String(score);
+  const char* c = temp.c_str();
+  u8g2.drawStr(3, 8, c);
   snake.drawSnake(u8g2);
   snake.nextFrameSnake();
+  apple.drawApple(u8g2);
   if(snake.checkForCollision()){
     state = GAME_OVER;
   }

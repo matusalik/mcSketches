@@ -2,6 +2,7 @@
 #define SNAKE_H
 #include<U8g2lib.h>
 #include "Segment.h"
+#include "Apple.h"
 class Snake{
   private:
     int snakeSize;
@@ -20,5 +21,6 @@ class Snake{
     void addNewSegment();
     void turnSnake(bool isRight);
     bool checkForCollision();
+    bool checkForApples(Apple& apple);
 };
 #endif
